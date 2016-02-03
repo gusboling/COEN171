@@ -1,7 +1,7 @@
 from Tkinter import *
 from random import randint
 from time import sleep,time
-from math import sqrt
+from math import *
 
 #Draw a Canvas for the game
 H=600
@@ -66,7 +66,7 @@ window.bind("<Left>", move_ship_left)
 #Mines:
 #	Because Python is object oriented, a single dictionary can be used to keep track of the mines, in place of three separate lists.
 #	Mine IDs constitute the key-values of each dictionary entry, while a tuple of (radius, speed) constitute data-values
-#	To find a given ID's radius, use "mines[your_mine's_id][0]". To find speed, use "mines[your_mine's_id][1]".
+#	To find a given ID's radius, use "mines[your_mine's_id][0]". To find speed, use "mines[your_mine's_id][1]", etc.
 
 mines = {}
 
@@ -74,27 +74,78 @@ def create_mine():
         radius = randint(0,75)
         x = randint(radius,600-radius)
         y = randint(radius,800-radius)
-        speed = randint(5,10)
+        speed = randint(1,5)
         mine_id = c.create_oval(x-radius, y+radius, x+radius, y-radius, outline="blue")
 
-        mines[mine_id] = (radius, speed)
+        mines[mine_id] = (radius, speed, x, y)
         
 def mov_mines():
-	for mine_id in mines:
-		x1,y1,x2,y2 = c.coords(mine_id)
-		c.move(mine_id,0,-mines[mine_id][1]) 
+	if len(mines) != 0:
+		for mine_id in mines:
+			#x1,y1,x2,y2 = c.coords(mine_id) #commmented out - serves no discernable purpose.
+			c.move(mine_id,0,-mines[mine_id][1]) 
 
+def clean_up_mines():
+	garbage_ids = []
+	for mine_id in mines:
+		if (c.coords(mine_id)[1]) <= -200:
+			garbage_ids.append(mine_id)
+	for gid in garbage_ids:
+		c.delete(gid)
+		try:
+			del mines[gid]
+			#print("Mine_ID %d Deleted Succefully. \n" % gid)
+		except:
+			print("Problem Deleting Mine_ID %d. \n" % gid)
+	return
+
+
+def distance(pointA, pointB):
+	deltaX2 = pow(pointB[0] - pointA[0], 2)
+	deltaY2 = pow(pointB[1] - pointA[1], 2)
+	distVal = sqrt(deltaY2+deltaX2)
+	return distVal
+
+def collision():
+	garbage_ids = []
+
+	ship_coord = c.coords(ship_h)
+	ship_top = [ship_coord[0], ship_coord[3]]
+	ship_bot = [ship_coord[0], ship_coord[5]]
+	ship_lef = [ship_coord[0]-100, ship_coord[1]]
+	ship_rig = [ship_coord[0]+100, ship_coord[1]]
+	points = [ship_top, ship_bot, ship_lef, ship_rig]
+
+	for mine in mines:
+		mine_coord = c.coords(mine)
+		mine_x_cent = mine_coord[0]+((mine_coord[2]-mine_coord[0])/2)
+		mine_y_cent = mine_coord[1]+((mine_coord[3]-mine_coord[1])/2)
+		mine_cent = [mine_x_cent, mine_y_cent]
+	
+		for point in points:
+			if distance(point, mine_cent) < mines[mine][0]:
+				#print("Collision Detected! \n")
+				garbage_ids.append(mine)
+
+	for gid in garbage_ids:
+		try:
+			c.delete(gid)
+			del mines[gid]
+		except:
+			print("Collision Error Mine_ID %d. \n" % gid)
 
 #main game loop
-NUM_MINES = 3
+NUM_MINES = 5
+
 for x in range(0,NUM_MINES):
-	create_mine() 
+	create_mine()
+
 while time()<END:
 	mov_mines()
 	if randint(1,50)==1:
 		create_mine()
-	#clean_up_mines() #you need to create this function
-	#collision()#you need to create this function
+	clean_up_mines()
+	collision()
 	window.update()
 	sleep(0.1)
 
