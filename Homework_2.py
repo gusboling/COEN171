@@ -4,11 +4,12 @@ from time import sleep,time
 from math import *
 
 #Draw a Canvas for the game
-H=600
-W= 800
-window=Tk()
+SCORE = 0
+H = 600
+W = 800
+window = Tk()
 window.title("Submarine Game")
-c=Canvas(window, width= W, height=H, bg="#CAE1FF" )
+c = Canvas(window, width= W, height=H, bg="#CAE1FF" )
 c.pack()
 
 #Draw a red submarine
@@ -71,7 +72,7 @@ window.bind("<Left>", move_ship_left)
 mines = {}
 
 def create_mine():
-        radius = randint(0,75)
+        radius = randint(25,75)
         x = randint(radius,600-radius)
         y = randint(radius,800-radius)
         speed = randint(1,5)
@@ -108,6 +109,7 @@ def distance(pointA, pointB):
 
 def collision():
 	garbage_ids = []
+	current_score = SCORE
 
 	ship_coord = c.coords(ship_h)
 	ship_top = [ship_coord[0], ship_coord[3]]
@@ -125,6 +127,7 @@ def collision():
 		for point in points:
 			if distance(point, mine_cent) < mines[mine][0]:
 				#print("Collision Detected! \n")
+				current_score += 1
 				garbage_ids.append(mine)
 
 	for gid in garbage_ids:
@@ -134,8 +137,22 @@ def collision():
 		except:
 			print("Collision Error Mine_ID %d. \n" % gid)
 
+	return current_score
+
+
 #main game loop
 NUM_MINES = 5
+END = time()+60
+c.create_text(150,30, text='SCORE', fill='black')
+score_text = c.create_text(150, 50, fill='black')
+c.create_text(100, 30, text='TIME', fill='black')
+time_text = c.create_text(100, 50, fill='black')
+
+def show_time(time_rem):
+	c.itemconfig(time_text, text=str(time_rem))
+
+def show_score(score):
+	c.itemconfig(score_text, text=str(score))
 
 for x in range(0,NUM_MINES):
 	create_mine()
@@ -145,8 +162,32 @@ while time()<END:
 	if randint(1,50)==1:
 		create_mine()
 	clean_up_mines()
-	collision()
+	SCORE = collision()
+	show_score(SCORE)
+	show_time(int(END - time()))
 	window.update()
-	sleep(0.1)
+	sleep(0.05)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""This code was created on January 1, 2016 by Augustus Boling."""
